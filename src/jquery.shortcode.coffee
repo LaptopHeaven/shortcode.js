@@ -36,27 +36,25 @@ $.fn.shortcode = (services) ->
       $.each regexs, (i) ->
         regex = new RegExp regexs[i], "g"
         match = regex.exec html
-        return false if match
+        if match
+          crude_options = $.trim(match[1]).split(' ') if match[1]
+          content       = $.trim(match[2])            if match[2]
+          
+          $.each crude_options, (i) ->
+            opts             = crude_options[i].split("=")
+            options[opts[0]] = opts[1].replace(/"/g, '')
+            
+            # Run shortcode function for replacement
+            replacement = run shortcode, options, content, this
 
-      if match
-        crude_options = $.trim(match[1]).split(' ') if match[1]
-        content       = $.trim(match[2])            if match[2]
+            # Recapture html in case shortcode changed the DOM
+            html = $(this).html()
 
-        $.each crude_options, (i) ->
-          opts             = crude_options[i].split("=")
-          options[opts[0]] = opts[1].replace(/"/g, '')
-
-      # Run shortcode function for replacement
-      replacement = run shortcode, options, content, this
-
-      # Recapture html in case shortcode changed the DOM
-      html = $(this).html()
-
-      # Handle returned jQuery object
-      if replacement
-        if replacement.jquery
-          replacement = replacement[0].outerHTML
-
-        # Replace shortcode and inject into DOM
-        html = html.replace(regex, replacement)
-        $(this).html html
+            # Handle returned jQuery object
+            if replacement
+              if replacement.jquery
+                replacement = replacement[0].outerHTML
+                
+                # Replace shortcode and inject into DOM
+                html = html.replace(regex, replacement)
+                $(this).html html
